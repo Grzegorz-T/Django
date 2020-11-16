@@ -1,12 +1,14 @@
 $(document).ready(function() {
     var labels = []
     var values = []
+    var profits = []
     $.ajax({
         type : 'GET',
         url : '/_upd_charts',
         success: function(data){
             labels = data.labels
             values = data.values
+            profits = data.profits
             setChart()
         }
     })
@@ -43,6 +45,20 @@ $(document).ready(function() {
             }
         return colors;
     }
+
+    function order_labels(values) {
+        sorted_values = values.sort();
+        ordered_labels = [];
+        for(let i=0;i<values.length;i++){
+            for(let j=0;j<values.length;j++){
+                if(values[i]==sorted_values[j]){
+                    ordered_labels[i]=labels[j];
+                }
+            }
+        }
+    return ordered_labels;
+    }
+
     function setChart(){
     var ctx = document.getElementById('myChart');
     var ctx2 = document.getElementById('myChart2');
@@ -71,10 +87,10 @@ $(document).ready(function() {
     var myChart = new Chart(ctx2, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: order_labels(profits),
             datasets: [{
                 label: '# of Votes',
-                data: values,
+                data: profits,
                 backgroundColor: getRandomColor(0),
                 borderColor: getRandomColor(100),
                 borderWidth: 3
@@ -99,6 +115,7 @@ $(document).ready(function() {
     });
     };
 })
+
 
 /*backgroundColor: [
     'rgba(255, 99, 132, 0.2)',

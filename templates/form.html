@@ -15,14 +15,13 @@
         $.ajax({
 			type : 'POST',
 			url : '/_update/'
-		})
-            .done(function(data){
+        }).done(function(data){
             $.each(data.stocks,function(i,stock){
                 $('#name'+(i+1)).text(stock.name);
-                $('#price'+(i+1)).text(stock.price);
-                $('#opening'+(i+1)).text(stock.opening);
-                $('#stock_max'+(i+1)).text(stock.max);
-                $('#stock_min'+(i+1)).text(stock.min);
+                $('#price'+(i+1)).text((stock.price).toFixed(4));
+                $('#opening'+(i+1)).text((stock.opening).toFixed(4));
+                $('#stock_max'+(i+1)).text((stock.max).toFixed(4));
+                $('#stock_min'+(i+1)).text((stock.min).toFixed(4));
                 if(data.bought_stocks[stock.id]){
                     $('#value'+(i+1)).text('Value: '+data.bought_stocks[stock.id]['value']+'$');
                 }
@@ -38,15 +37,15 @@
                     $('#change'+(i+1)).text(stock.change).css("color","rgb(225, 0, 0)");
                     $('#perc'+(i+1)).text(stock.perc+'%').css("color","rgb(225, 0, 0)");
                 }
-                if(data.bought_stocks[stock.id]){
-                    if(data.bought_stocks[stock.id]['profit']>0){
-                        $('#profit'+(i+1)).text(data.bought_stocks[stock.id]['profit']+'%').css("color","rgb(0, 200, 0)");
+                if(data.bought_stocks[stock.name]){
+                    if(data.bought_stocks[stock.name]['profit']>0){
+                        $('#profit'+(i+1)).text(data.bought_stocks[stock.name]['profit']+'%').css("color","rgb(0, 200, 0)");
                     }
-                    else if(data.bought_stocks[stock.id]['profit']==0){
-                        $('#profit'+(i+1)).text(data.bought_stocks[stock.id]['profit']+'%');
+                    else if(data.bought_stocks[stock.name]['profit']==0){
+                        $('#profit'+(i+1)).text(data.bought_stocks[stock.name]['profit']+'%');
                     }
                     else{
-                        $('#profit'+(i+1)).text(data.bought_stocks[stock.id]['profit']+'%').css("color","rgb(225, 0, 0)");
+                        $('#profit'+(i+1)).text(data.bought_stocks[stock.name]['profit']+'%').css("color","rgb(225, 0, 0)");
                     }
                 }
             });
@@ -120,7 +119,5 @@
 {% endblock %}
 {% block jquery %}
 {% endblock %}
-
-
 </body>
 </html>

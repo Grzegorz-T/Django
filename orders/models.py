@@ -3,6 +3,7 @@ import datetime
 
 class Order(models.Model):
 	member_id = models.IntegerField()
+	stock_name = models.TextField()
 	quantity = models.IntegerField()
 	owned = models.IntegerField()
 	stock_id = models.IntegerField()

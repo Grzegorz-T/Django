@@ -73,17 +73,17 @@
                     </div>
                 </form>
             </td>
-            {% if bought_stocks|isnt_empty:stock.id %}
+            {% if bought_stocks|isnt_empty:stock.name %}
                 <td class="align-middle">
-                    <div id="quantity{{forloop.counter}}">Owned: {% get_value bought_stocks stock.id 'quantity' %}</div>
-                    <div id="value{{forloop.counter}}">Value: {% get_value bought_stocks stock.id 'value' %}$</div>
+                    <div id="quantity{{forloop.counter}}">Owned: {% get_value bought_stocks stock.name 'quantity' %}</div>
+                    <div id="value{{forloop.counter}}">Value: {% get_value bought_stocks stock.name 'value' %}$</div>
                 </td>
                 {% if stock.change > 0 %}
-                <td class="align-middle" style="color: rgb(0, 200, 0);" id="profit{{forloop.counter}}">{% get_value bought_stocks stock.id 'profit' %}%</td>
+                <td class="align-middle" style="color: rgb(0, 200, 0);" id="profit{{forloop.counter}}">{% get_value bought_stocks stock.name 'profit' %}%</td>
                 {% elif stock.change == 0 %}
-                <td class="align-middle" id="profit{{forloop.counter}}">{% get_value bought_stocks stock.id 'profit' %}%</td>
+                <td class="align-middle" id="profit{{forloop.counter}}">{% get_value bought_stocks stock.name 'profit' %}%</td>
                 {% else %}
-                <td class="align-middle" style="color: rgb(225, 0, 0);"  id="profit{{forloop.counter}}">{% get_value bought_stocks stock.id 'profit' %}%</td>
+                <td class="align-middle" style="color: rgb(225, 0, 0);"  id="profit{{forloop.counter}}">{% get_value bought_stocks stock.name 'profit' %}%</td>
                 {% endif %}
             {% else  %}
                 <td class="align-middle">

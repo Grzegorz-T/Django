@@ -16,11 +16,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 def count_profit(request, ids):
 	#then = datetime.now()
-	ids = str(ids)
 	profit = 0
 	previous_value = 0
 	current_value = request.session['bought_stocks'][ids]['value']
-	objects = Order.objects.filter(stock_id = ids).filter(owned__gt=0).all()
+	objects = Order.objects.filter(stock_name = ids).filter(owned__gt=0).all()
 	for obj in objects:
 		previous_value += float(obj.owned*obj.purchase_price)
 	#print(current_value, 'to ', previous_value)
@@ -29,25 +28,17 @@ def count_profit(request, ids):
 	#print(datetime.now() - then)
 	return profit
 
-def stock_price(ids):
+def stock_price(name):
 	if(requests.get('https://www.bankier.pl/gielda/notowania/akcje')):
 		url = requests.get('https://www.bankier.pl/gielda/notowania/akcje') 
 		#file = open('C:/Users/grzes/OneDrive/Pulpit/akcje.html')
 		soup = BeautifulSoup(url.content , 'html.parser')
 		price = 0
-		ids = int(ids)
-		if(ids==1):
-			pb = soup.find("a", text="06MAGNA").find_parent('tr')
-			price = float(pb.select_one("td:nth-of-type(2)").text.strip().replace(',','.'))
-		elif(ids<10):
-			price = soup.select_one(f"tr:nth-of-type({ids})").select_one("td:nth-of-type(2)").text.strip().replace(',','.')
-			price = float(price)
-		else:
-			ids+=1
-			price = float(soup.select_one(f"tr:nth-of-type({ids})").select_one("td:nth-of-type(2)").text.strip().replace(',','.'))
+		pb = soup.find("a", text=name).find_parent('tr')
+		price = float(pb.select_one("td:nth-of-type(2)").text.strip().replace(',','.'))
 		return price
 	else:
-		price = Stocks.objects.filter(id=ids).first()
+		price = Stocks.objects.filter(name=name).first()
 		print(price)
 
 
@@ -92,8 +83,8 @@ def update(request):
 				request.session['stocks'] = [entry for entry in Stocks.objects.order_by('-'+request.session['order_by']).values()]
 		else:
 			request.session['stocks'] = []
-			for stock_id in request.session['bought_stocks']:
-				request.session['stocks'].append([entry for entry in Stocks.objects.filter(id=stock_id).values()][0])
+			for stock_name in request.session['bought_stocks']:
+				request.session['stocks'].append([entry for entry in Stocks.objects.filter(name=stock_name).values()][0])
 				
 			if(request.session['top'] == False):
 				request.session['stocks'] = sorted(request.session['stocks'], key=lambda k: k[request.session['order_by']])
@@ -101,61 +92,60 @@ def update(request):
 				request.session['stocks'] = sorted(request.session['stocks'], key=lambda k: k[request.session['order_by']], reverse=True)
 		return JsonResponse(data = {'stocks': request.session['stocks'], 'bought_stocks': request.session['bought_stocks']})
 
-def page(request,*args,**kwargs):
+def page(request):
 	request.session['main']=True
 	request.session['order_by'] = 'name'
 	request.session['top'] = False
 	update_stocks()
 	request.session['stocks'] = [entry for entry in Stocks.objects.values()]
-	stocks = Stocks.objects.values()
 	request.session['bought_stocks'] = {}
-	print(stocks)
 	mem_id = 1
 	mem = Member.objects.get(id=mem_id)
 
-	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_id', flat=True).distinct()
+	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
 	for ids in vall:
-		suma = Order.objects.filter(stock_id=ids).aggregate(Sum('owned'))
-		price = stocks[ids-1]['price']
-		request.session['bought_stocks'].update({str(ids):{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
-		request.session['bought_stocks'][str(ids)]['profit'] = count_profit(request, ids)
-
-	data = {
-		'stocks': stocks,
-		'money': Member.objects.get(id=1).money,
-		'bought_stocks': request.session['bought_stocks']
-	}
-	return render(request, 'stocks.html', data)
-
-def my_stocks(request,*args,**kwargs):
-	request.session['main']=False
-	request.session['order_by'] = 'name'
-	request.session['top'] = False
-	a = []
-	stocks = Stocks.objects.values()
-	request.session['bought_stocks'] = {}
-	request.session['stocks'] = []
-	mem_id = 1
-	mem = Member.objects.get(id=mem_id)
-
-	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_id', flat=True).distinct()
-	for ids in vall:
-		suma = Order.objects.filter(stock_id=ids).aggregate(Sum('owned'))
-		price = stocks[ids-1]['price']
-		request.session['bought_stocks'].update({str(ids):{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
-		request.session['bought_stocks'][str(ids)]['profit'] = count_profit(request, ids)
-		a.append(ids)
-
-	stocks = []
-	a.sort()
-	for i in a:
-		request.session['stocks'].append([entry for entry in Stocks.objects.filter(id=i).values()][0])
+		suma = Order.objects.filter(stock_name=ids).aggregate(Sum('owned'))
+		price = Stocks.objects.filter(name=ids).values('price').first()['price']
+		request.session['bought_stocks'].update({ids:{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
+		request.session['bought_stocks'][ids]['profit'] = count_profit(request, ids)
 
 	data = {
 		'stocks': request.session['stocks'],
 		'money': Member.objects.get(id=1).money,
 		'bought_stocks': request.session['bought_stocks']
 	}
+	return render(request, 'stocks.html', data)
+
+def my_stocks(request):
+	request.session['main']=False
+	request.session['order_by'] = 'name'
+	request.session['top'] = False
+	names = []
+	stocks = Stocks.objects.values()
+	request.session['bought_stocks'] = {}
+	request.session['stocks'] = []
+	mem_id = 1
+	mem = Member.objects.get(id=mem_id)
+
+	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
+	for name in vall:
+		suma = Order.objects.filter(stock_name=name).aggregate(Sum('owned'))
+		price = Stocks.objects.filter(name=name).values('price').first()['price']
+		request.session['bought_stocks'].update({name:{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
+		request.session['bought_stocks'][name]['profit'] = count_profit(request, name)
+		names.append(name)
+
+	stocks = []
+	names.sort()
+	for value in names:
+		request.session['stocks'].append([entry for entry in Stocks.objects.filter(name=value).values()][0])
+
+	data = {
+		'stocks': request.session['stocks'],
+		'money': Member.objects.get(id=1).money,
+		'bought_stocks': request.session['bought_stocks']
+	}
+
 	return render(request, 'mystocks.html', data)
 
 @csrf_exempt
@@ -183,21 +173,24 @@ def upd_charts(request):
 	mem = Member.objects.get(id=mem_id)
 	stocks = Stocks.objects.values()
 
-	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_id', flat=True).distinct()
-	for ids in vall:
-		suma = Order.objects.filter(stock_id=ids).aggregate(Sum('owned'))
-		price = stocks[ids-1]['price']
-		request.session['bought_stocks'].update({str(ids):{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
-		request.session['bought_stocks'][str(ids)]['profit'] = count_profit(request, ids)
+	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
+	for name in vall:
+		suma = Order.objects.filter(stock_name=name).aggregate(Sum('owned'))
+		price = Stocks.objects.filter(name=name).values('price').first()['price']
+		request.session['bought_stocks'].update({name:{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
+		request.session['bought_stocks'][name]['profit'] = count_profit(request, name)
 
 	stocks=[]
 	for value in request.session['bought_stocks']:
-		stocks.append([entry for entry in Stocks.objects.filter(id=value).values()][0])
+		print(value)
+		stocks.append([entry for entry in Stocks.objects.filter(name=value).values()][0])
 
 	labels = []
 	values = []
+	profits = []
 	for stock in stocks:
 		labels.append(stock['name'])
-		values.append(request.session['bought_stocks'][str(stock['id'])]['value'])
+		values.append(request.session['bought_stocks'][stock['name']]['value'])
+		profits.append(request.session['bought_stocks'][stock['name']]['profit'])
 
-	return JsonResponse({'labels': labels, 'values': values})
+	return JsonResponse({'labels': labels, 'values': values, 'profits': profits})
