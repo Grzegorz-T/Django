@@ -18,19 +18,23 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from stocks.views import page, my_stocks, charts, update, upd_charts, order_table
+from stocks.views import home, loginPage, logoutUser, registerPage, my_stocks, charts, update, upd_charts, order_table
 from orders.views import process
 
 urlpatterns = [
-    path('', page, name='page'),
+    path('register/', registerPage, name="register"),
+    path('login/', loginPage, name="login"), 
+    path('logout/', logoutUser, name="logout"),
+
+    path('', home, name='home'),
     path('mystocks/', my_stocks, name='my_stocks'),
     path('charts/', charts, name='charts'),
+
     path('process/', process),
-    path('admin/', admin.site.urls),
     path('_update/', update),
     path('_upd_charts/', upd_charts),
-    
     path('order_table/', order_table),
-    
+
+    path('admin/', admin.site.urls),
     
 ]

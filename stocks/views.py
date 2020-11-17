@@ -1,11 +1,18 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import requests
 from django.db import connection
 from django.http import JsonResponse
 from datetime import datetime
 from .models import Stocks
+from .forms import CreateUserForm
 from orders.models import Order
 from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import authenticate, login, logout
+
+from django.contrib import messages
+
+from django.contrib.auth.decorators import login_required
 
 from bs4 import BeautifulSoup
 from members.models import Member
@@ -92,7 +99,49 @@ def update(request):
 				request.session['stocks'] = sorted(request.session['stocks'], key=lambda k: k[request.session['order_by']], reverse=True)
 		return JsonResponse(data = {'stocks': request.session['stocks'], 'bought_stocks': request.session['bought_stocks']})
 
-def page(request):
+def registerPage(request):
+	if request.user.is_authenticated:
+		return redirect('home')
+	else:
+		form = CreateUserForm()
+		if request.method == 'POST':
+			form = CreateUserForm(request.POST)
+			if form.is_valid():
+				form.save()
+				user = form.cleaned_data.get('username')
+				messages.success(request, 'Account was created for ' + user)
+
+				return redirect('login')
+			
+
+		context = {'form':form}
+		return render(request, 'register.html', context)
+
+def loginPage(request):
+	if request.user.is_authenticated:
+		return redirect('home')
+	else:
+		if request.method == 'POST':
+			username = request.POST.get('username')
+			password =request.POST.get('password')
+
+			user = authenticate(request, username=username, password=password)
+
+			if user is not None:
+				login(request, user)
+				return redirect('home')
+			else:
+				messages.info(request, 'Username OR password is incorrect')
+
+		context = {}
+		return render(request, 'login.html', context)
+
+def logoutUser(request):
+	logout(request)
+	return redirect('login')
+
+@login_required(login_url='login')
+def home(request):
 	request.session['main']=True
 	request.session['order_by'] = 'name'
 	request.session['top'] = False
@@ -100,8 +149,8 @@ def page(request):
 	request.session['stocks'] = [entry for entry in Stocks.objects.values()]
 	request.session['bought_stocks'] = {}
 	mem_id = 1
-	mem = Member.objects.get(id=mem_id)
-
+	mem = User.objects.get(id=mem_id)
+	print(request.user)
 	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
 	for ids in vall:
 		suma = Order.objects.filter(stock_name=ids).aggregate(Sum('owned'))
@@ -116,6 +165,7 @@ def page(request):
 	}
 	return render(request, 'stocks.html', data)
 
+@login_required(login_url='login')
 def my_stocks(request):
 	request.session['main']=False
 	request.session['order_by'] = 'name'
@@ -162,6 +212,7 @@ def order_table(request):
 
 		return JsonResponse({'stocks': request.session['stocks'], 'bought_stocks': request.session['bought_stocks']})
 
+@login_required(login_url='login')
 def charts(request,*args,**kwargs):
 	data = {
 		'money': Member.objects.get(id=1).money

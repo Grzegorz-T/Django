@@ -109,6 +109,10 @@
                     </b>
                 </div>
             </label>   
+            <span class="hello-msg">Hello, {{request.user}}</span>
+            <li class="nav-item">
+                <a class="btn btn-outline-warning my-2 my-sm-0" href="/logout">Logout</a>
+            </li>
         </div>
     </nav>
 {% block content %}
