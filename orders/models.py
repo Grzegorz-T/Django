@@ -2,7 +2,7 @@ from django.db import models
 import datetime
 
 class Order(models.Model):
-	member_id = models.IntegerField()
+	member_name = models.TextField()
 	stock_name = models.TextField()
 	quantity = models.IntegerField()
 	owned = models.IntegerField()

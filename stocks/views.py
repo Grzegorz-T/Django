@@ -4,13 +4,9 @@ from django.db import connection
 from django.http import JsonResponse
 from datetime import datetime
 from .models import Stocks
-from .forms import CreateUserForm
+from members.decorators import allowed_users
 from orders.models import Order
 from django.contrib.sessions.backends.db import SessionStore
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth import authenticate, login, logout
-
-from django.contrib import messages
 
 from django.contrib.auth.decorators import login_required
 
@@ -99,48 +95,9 @@ def update(request):
 				request.session['stocks'] = sorted(request.session['stocks'], key=lambda k: k[request.session['order_by']], reverse=True)
 		return JsonResponse(data = {'stocks': request.session['stocks'], 'bought_stocks': request.session['bought_stocks']})
 
-def registerPage(request):
-	if request.user.is_authenticated:
-		return redirect('home')
-	else:
-		form = CreateUserForm()
-		if request.method == 'POST':
-			form = CreateUserForm(request.POST)
-			if form.is_valid():
-				form.save()
-				user = form.cleaned_data.get('username')
-				messages.success(request, 'Account was created for ' + user)
-
-				return redirect('login')
-			
-
-		context = {'form':form}
-		return render(request, 'register.html', context)
-
-def loginPage(request):
-	if request.user.is_authenticated:
-		return redirect('home')
-	else:
-		if request.method == 'POST':
-			username = request.POST.get('username')
-			password =request.POST.get('password')
-
-			user = authenticate(request, username=username, password=password)
-
-			if user is not None:
-				login(request, user)
-				return redirect('home')
-			else:
-				messages.info(request, 'Username OR password is incorrect')
-
-		context = {}
-		return render(request, 'login.html', context)
-
-def logoutUser(request):
-	logout(request)
-	return redirect('login')
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin'])
 def home(request):
 	request.session['main']=True
 	request.session['order_by'] = 'name'
@@ -149,8 +106,8 @@ def home(request):
 	request.session['stocks'] = [entry for entry in Stocks.objects.values()]
 	request.session['bought_stocks'] = {}
 	mem_id = 1
-	mem = User.objects.get(id=mem_id)
-	print(request.user)
+	print(type(str(request.user.username)))
+	a = User.a
 	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
 	for ids in vall:
 		suma = Order.objects.filter(stock_name=ids).aggregate(Sum('owned'))

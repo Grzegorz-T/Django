@@ -18,7 +18,8 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from stocks.views import home, loginPage, logoutUser, registerPage, my_stocks, charts, update, upd_charts, order_table
+from members.views import loginPage, logoutUser, registerPage
+from stocks.views import home, my_stocks, charts, update, upd_charts, order_table
 from orders.views import process
 
 urlpatterns = [
