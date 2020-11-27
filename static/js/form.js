@@ -2,17 +2,17 @@ $(document).ready(function() {
 
 	$(document).on('click','.btn-outline-success', function(event) {
 
-		let member_id = $(this).attr('member_id');
+		let stock_name = $(this).attr('stock_name');
 		let row = $(this).attr('row_id');
 		let quant = $('#Stock_Input'+row).val();
 		req = $.ajax({
 			data : {
-				id: member_id,
+				name: stock_name,
 				quantity: quant,
 				buy: true,
 			},
 			type : 'POST',
-			url : '/process/'
+			url : '/_process/'
 		})
 		req.done(function(data) {
 			if(quant>0){
@@ -29,17 +29,17 @@ $(document).ready(function() {
 
 	$(document).on('click','.btn-outline-danger', function(event) {
 
-		let member_id = $(this).attr('member_id');
+		let stock_name = $(this).attr('stock_name');
 		let row = $(this).attr('row_id');
 		let quant = $('#Stock_Input'+row).val();
 		req = $.ajax({
 			data : {
-				id: member_id,
+				name: stock_name,
 				quantity: quant,
 				buy: false,
 			},
 			type : 'POST',
-			url : '/process/'
+			url : '/_process/'
 		})
 		req.done(function(data) {
 			if(quant>0){

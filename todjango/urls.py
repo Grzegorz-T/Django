@@ -31,10 +31,10 @@ urlpatterns = [
     path('mystocks/', my_stocks, name='my_stocks'),
     path('charts/', charts, name='charts'),
 
-    path('process/', process),
+    path('_process/', process),
     path('_update/', update),
     path('_upd_charts/', upd_charts),
-    path('order_table/', order_table),
+    path('_order_table/', order_table),
 
     path('admin/', admin.site.urls),
     

@@ -34,62 +34,63 @@
         {% for stock in stocks %}
         <tr>
             <td class="align-middle">{{forloop.counter}}</td>
-            <td class="align-middle" id="name{{stock.id}}">{{stock.name}}</td>
+            <td class="align-middle" id="name{{forloop.counter}}">{{stock.name}}</td>
             {% if stock.change > 0 %}
-            <td class="align-middle" style="color: rgb(0, 200, 0);" id="price{{stock.id}}">{{stock.price}}</td>
+            <td class="align-middle" style="color: rgb(0, 200, 0);" id="price{{forloop.counter}}">{{stock.price}}</td>
             {% elif stock.change == 0 %}
-            <td class="align-middle" id="price{{stock.id}}">{{stock.price}}</td>
+            <td class="align-middle" id="price{{forloop.counter}}">{{stock.price}}</td>
             {% else %}
-            <td class="align-middle" style="color: rgb(225, 0, 0);"  id="price{{stock.id}}">{{stock.price}}</td>
+            <td class="align-middle" style="color: rgb(225, 0, 0);"  id="price{{forloop.counter}}">{{stock.price}}</td>
             {% endif %}
 
             {% if stock.change > 0 %}
-            <td class="align-middle" style="color: rgb(0, 200, 0);" id="change{{stock.id}}">{{stock.change}}</td>
+            <td class="align-middle" style="color: rgb(0, 200, 0);" id="change{{forloop.counter}}">{{stock.change}}</td>
             {% elif stock.change == 0 %}
-            <td class="align-middle" id="change{{stock.id}}">{{stock.change}}</td>
+            <td class="align-middle" id="change{{forloop.counter}}">{{stock.change}}</td>
             {% else %}
-            <td class="align-middle" style="color: rgb(225, 0, 0);"  id="change{{stock.id}}">{{stock.change}}</td>
+            <td class="align-middle" style="color: rgb(225, 0, 0);"  id="change{{forloop.counter}}">{{stock.change}}</td>
             {% endif %}
 
             {% if stock.change > 0 %}
-            <td class="align-middle" style="color: rgb(0, 200, 0);" id="perc{{stock.id}}">{{stock.perc}}%</td>
+            <td class="align-middle" style="color: rgb(0, 200, 0);" id="perc{{forloop.counter}}">{{stock.perc}}%</td>
             {% elif stock.change == 0 %}
-            <td class="align-middle" id="perc{{stock.id}}">{{stock.perc}}%</td>
+            <td class="align-middle" id="perc{{forloop.counter}}">{{stock.perc}}%</td>
             {% else %}
-            <td class="align-middle" style="color: rgb(225, 0, 0);"  id="perc{{stock.id}}">{{stock.perc}}%</td>
+            <td class="align-middle" style="color: rgb(225, 0, 0);"  id="perc{{forloop.counter}}">{{stock.perc}}%</td>
             {% endif %}
-            <td class="align-middle" id="opening{{stock.id}}">{{stock.opening}}</td>
-            <td class="align-middle" id="max{{stock.id}}">{{stock.max}}</td>
-            <td class="align-middle" id="min{{stock.id}}">{{stock.min}}</td>
+            <td class="align-middle" id="opening{{forloop.counter}}">{{stock.opening}}</td>
+            <td class="align-middle" id="max{{forloop.counter}}">{{stock.max}}</td>
+            <td class="align-middle" id="min{{forloop.counter}}">{{stock.min}}</td>
             <td class="align-middle">
                 <form class="form-inline">
                     <div>
-                        <input type="number" class="form-control" id="Stock_Input{{stock.id}}" min="0" max="100000" value="0">
-                        <button id="buy_button{{stock.id}}" type="button" class="btn btn-outline-success" row_id="{{stock.id}}" member_id="{{stock.id}}">B</button>
-                        <button id="sell_button{{stock.id}}" type="button" class="btn btn-outline-danger" row_id="{{stock.id}}" member_id="{{stock.id}}">S</button>
+                        <input type="number" class="form-control" id="Stock_Input{{forloop.counter}}" min="0" max="100000" value="0">
+                        <button id="buy_button" type="button" class="btn btn-outline-success" row_id="{{forloop.counter}}" stock_name="{{stock.name}}">B</button>
+                        <button id="sell_button" type="button" class="btn btn-outline-danger" row_id="{{forloop.counter}}" stock_name="{{stock.name}}">S</button>
                     </div>
                 </form>
             </td>
             {% load get_item %}
             {% if bought_stocks|isnt_empty:stock.name %}
-                <td class="align-middle">
-                    <div id="quantity{{stock.id}}">Owned: {% get_value bought_stocks stock.name 'quantity' %}</div>
-                    <div id="value{{stock.id}}">Value: {% get_value bought_stocks stock.name 'value' %}$</div>
-                </td>
-                {% if stock.change > 0 %}
-                <td class="align-middle" style="color: rgb(0, 200, 0);" id="profit{{stock.id}}">{% get_value bought_stocks stock.name 'profit' %}%</td>
-                {% elif stock.change == 0 %}
-                <td class="align-middle" id="profit{{stock.id}}">{% get_value bought_stocks stock.name 'profit' %}%</td>
+                {% with b_stock=bought_stocks|get_item:stock.name %}
+                    <td class="align-middle">
+                        <div id="quantity{{forloop.counter}}">Owned: {{ b_stock.quantity }}</div>
+                        <div id="value{{forloop.counter}}">Value: {{ b_stock.value }}$</div>
+                    </td>
+                {% if b_stock.profit > 0 %}
+                    <td class="align-middle" style="color: rgb(0, 200, 0);" id="profit{{forloop.counter}}">{{b_stock.profit}}%</td>
+                {% elif b_stock.profit == 0 %}
+                    <td class="align-middle" id="profit{{forloop.counter}}">{{b_stock.profit}}%</td>
                 {% else %}
-                <td class="align-middle" style="color: rgb(225, 0, 0);"  id="profit{{stock.id}}">{% get_value bought_stocks stock.name 'profit' %}%</td>
+                    <td class="align-middle" style="color: rgb(225, 0, 0);"  id="profit{{forloop.counter}}">{{b_stock.profit}}%</td>
                 {% endif %}
-
+                {% endwith %}
             {% else  %}
                 <td class="align-middle">
-                    <div id="quantity{{stock.id}}">Owned: 0</div>
-                    <div id="value{{stock.id}}">Value: 0$</div>
+                    <div id="quantity{{forloop.counter}}">Owned: 0</div>
+                    <div id="value{{forloop.counter}}">Value: 0$</div>
                 </td>
-                <td class="align-middle" id="profit{{stock.id}}">0%</td>
+                <td class="align-middle" id="profit{{forloop.counter}}">0%</td>
             {% endif %}
         {% endfor %}
     </tbody>

@@ -4,7 +4,7 @@ $(document).ready(function() {
     var profits = []
     $.ajax({
         type : 'GET',
-        url : '/_upd_charts',
+        url : '/_upd_charts/',
         success: function(data){
             labels = data.labels
             values = data.values

@@ -1,13 +1,13 @@
 from django.db import models
-import datetime
+from members.models import Member
+from stocks.models import Stocks
 
 class Order(models.Model):
-	member_name = models.TextField()
-	stock_name = models.TextField()
+	member = models.ForeignKey(Member, null=True, on_delete= models.SET_NULL)
+	stock = models.ForeignKey(Stocks, null=True, on_delete= models.SET_NULL)
 	quantity = models.IntegerField()
 	owned = models.IntegerField()
-	stock_id = models.IntegerField()
 	purchase_price = models.FloatField()
 	buy = models.BooleanField()
-	date = models.DateField(default=datetime.date.today)
-	
+	date = models.DateField(auto_now_add=True)
+

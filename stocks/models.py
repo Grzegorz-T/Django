@@ -9,4 +9,5 @@ class Stocks(models.Model):
     max = models.FloatField()
     min = models.FloatField()
 
-    
+    def __str__(self):
+        return self.name

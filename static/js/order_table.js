@@ -8,29 +8,31 @@ $(document).ready(function() {
                 name: n,
             },
 			type : 'POST',
-			url : '/order_table/'
+			url : '/_order_table/'
         })
         req.done(function(data) {
                 $.each(data.stocks,function(i,stock){
                 $('#name'+(i+1)).text(stock.name);
-                $('#price'+(i+1)).text(stock.price);
-                $('#perc'+(i+1)).text(stock.perc+'%');
                 if(stock.change>0){
+                    $('#price'+(i+1)).text(stock.price).css("color","rgb(0, 200, 0)");
                     $('#change'+(i+1)).text(stock.change).css("color","rgb(0, 200, 0)");
-                    $('#perc'+(i+1)).css("color","rgb(0, 200, 0)");
+                    $('#perc'+(i+1)).text(stock.perc+'%').css("color","rgb(0, 200, 0)");
                 }
                 else if(stock.change==0){
-                    $('#change'+(i+1)).text(stock.change);
+                    $('#price'+(i+1)).text(stock.price).css("color","rgb(0, 0, 0)");
+                    $('#change'+(i+1)).text(stock.change).css("color","rgb(0, 0, 0)");
+                    $('#perc'+(i+1)).text(stock.perc+'%').css("color","rgb(0, 0, 0)");
                 }
                 else{
+                    $('#price'+(i+1)).text(stock.price).css("color","rgb(225, 0, 0)");
                     $('#change'+(i+1)).text(stock.change).css("color","rgb(225, 0, 0)");
-                    $('#perc'+(i+1)).css("color","rgb(225, 0, 0)");
+                    $('#perc'+(i+1)).text(stock.perc+'%').css("color","rgb(225, 0, 0)");
                 }
                 $('#opening'+(i+1)).text(stock.opening);
                 $('#stock_max'+(i+1)).text(stock.stock_max);
                 $('#stock_min'+(i+1)).text(stock.stock_min);
-                $('#buy_button'+(i+1)).attr('member_id',stock.id);
-                $('#sell_button'+(i+1)).attr('member_id',stock.id);
+                $('#buy_button'+(i+1)).attr('stock_name', stock.name);
+                $('#sell_button'+(i+1)).attr('stock_name', stock.name);
                 if(data.bought_stocks[stock.name]){
                     $('#quantity'+(i+1)).text('Owned: '+data.bought_stocks[stock.name]['quantity']);
                     $('#value'+(i+1)).text('Value: '+data.bought_stocks[stock.name]['value']+'$');

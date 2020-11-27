@@ -3,10 +3,13 @@ import requests
 
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import Group
 
 from .decorators import unauthenticated_user
 from .forms import CreateUserForm
 from django.contrib import messages
+
+from members.models import Member
 
 
 @unauthenticated_user
@@ -17,13 +20,13 @@ def registerPage(request):
 		if form.is_valid():
 			user = form.save()
 			username = form.cleaned_data.get('username')
-			print('tworzenie konta')
 			Member.objects.create(
 				member = user,
-				nick = user.username,
+				name = username,
 				)
-			messages.success(request, 'Account was created for ' + user)
-
+			group = Group.objects.get(name='customer')
+			user.groups.add(group)
+			messages.success(request, 'Account was created for ' + username)
 			return redirect('login')
 		
 
@@ -49,4 +52,4 @@ def loginPage(request):
 
 def logoutUser(request):
 	logout(request)
-	return redirect('login')
+	return redirect('/')

@@ -4,7 +4,7 @@ from django.db import connection
 from django.http import JsonResponse
 from datetime import datetime
 from .models import Stocks
-from members.decorators import allowed_users
+from members.decorators import allowed_users, run_once
 from orders.models import Order
 from django.contrib.sessions.backends.db import SessionStore
 
@@ -17,12 +17,11 @@ from django.db.models import Sum
 from django.views.decorators.csrf import csrf_exempt
 
 
-def count_profit(request, ids):
+def count_profit(request, stock, current_value):
 	#then = datetime.now()
 	profit = 0
 	previous_value = 0
-	current_value = request.session['bought_stocks'][ids]['value']
-	objects = Order.objects.filter(stock_name = ids).filter(owned__gt=0).all()
+	objects = Order.objects.filter(member=request.user.member).filter(stock = stock).filter(owned__gt=0).all()
 	for obj in objects:
 		previous_value += float(obj.owned*obj.purchase_price)
 	#print(current_value, 'to ', previous_value)
@@ -41,8 +40,8 @@ def stock_price(name):
 		price = float(pb.select_one("td:nth-of-type(2)").text.strip().replace(',','.'))
 		return price
 	else:
-		price = Stocks.objects.filter(name=name).first()
-		print(price)
+		price = Stocks.objects.filter(name=name).get(price)
+		return price
 
 
 def update_stocks():
@@ -79,15 +78,15 @@ def update_stocks():
 def update(request):
 	if request.method == 'POST':
 		update_stocks()
-		if(request.session['main']==True):
+		if(request.path=='/'):
 			if(request.session['top'] == False):
 				request.session['stocks'] = [entry for entry in Stocks.objects.order_by(request.session['order_by']).values()]
 			else:
 				request.session['stocks'] = [entry for entry in Stocks.objects.order_by('-'+request.session['order_by']).values()]
-		else:
+		elif(request.path=='/mystocks'):
 			request.session['stocks'] = []
-			for stock_name in request.session['bought_stocks']:
-				request.session['stocks'].append([entry for entry in Stocks.objects.filter(name=stock_name).values()][0])
+			for stock in request.session['bought_stocks']:
+				request.session['stocks'].append([entry for entry in Stocks.objects.filter(name=stock).values()][0])
 				
 			if(request.session['top'] == False):
 				request.session['stocks'] = sorted(request.session['stocks'], key=lambda k: k[request.session['order_by']])
@@ -96,60 +95,62 @@ def update(request):
 		return JsonResponse(data = {'stocks': request.session['stocks'], 'bought_stocks': request.session['bought_stocks']})
 
 
-@login_required(login_url='login')
-@allowed_users(allowed_roles=['admin'])
+def get_bought_stocks(request):
+	bought_stocks = {}
+	orders = Order.objects.filter(member=request.user.member).filter(owned__gt=0).values('stock').distinct()
+	for order in orders:
+		stock = Stocks.objects.get(id=order['stock'])
+		suma = Order.objects.filter(member=request.user.member).filter(stock=stock).aggregate(Sum('owned'))
+		bought_stocks.update({stock.name:{'value': round(stock.price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
+		bought_stocks[stock.name]['profit'] = count_profit(request, stock, bought_stocks[stock.name]['value'])
+	return bought_stocks
+
 def home(request):
-	request.session['main']=True
 	request.session['order_by'] = 'name'
 	request.session['top'] = False
-	update_stocks()
 	request.session['stocks'] = [entry for entry in Stocks.objects.values()]
-	request.session['bought_stocks'] = {}
-	mem_id = 1
-	print(type(str(request.user.username)))
-	a = User.a
-	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
-	for ids in vall:
-		suma = Order.objects.filter(stock_name=ids).aggregate(Sum('owned'))
-		price = Stocks.objects.filter(name=ids).values('price').first()['price']
-		request.session['bought_stocks'].update({ids:{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
-		request.session['bought_stocks'][ids]['profit'] = count_profit(request, ids)
+
+	if(request.user.is_authenticated):
+		request.session['logged'] = True
+		request.session['money'] = Member.objects.get(member=request.user).money
+		request.session['bought_stocks'] = get_bought_stocks(request)
+	else:
+		if not 'logged' in request.session:
+			request.session['logged'] = False
+			request.session['money'] = 20000
+			request.session['bought_stocks'] = {}
+
 
 	data = {
 		'stocks': request.session['stocks'],
-		'money': Member.objects.get(id=1).money,
+		'money': request.session['money'],
 		'bought_stocks': request.session['bought_stocks']
 	}
 	return render(request, 'stocks.html', data)
 
-@login_required(login_url='login')
 def my_stocks(request):
-	request.session['main']=False
 	request.session['order_by'] = 'name'
 	request.session['top'] = False
-	names = []
-	stocks = Stocks.objects.values()
-	request.session['bought_stocks'] = {}
-	request.session['stocks'] = []
-	mem_id = 1
-	mem = Member.objects.get(id=mem_id)
+	if(request.user.is_authenticated):
+		request.session['money'] = Member.objects.get(member=request.user).money
+		request.session['bought_stocks'] = get_bought_stocks(request)
+	else:
+		if not 'logged' in request.session:
+			request.session['logged'] = False
+			request.session['money'] = 20000
+			request.session['bought_stocks'] = {}
 
-	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
-	for name in vall:
-		suma = Order.objects.filter(stock_name=name).aggregate(Sum('owned'))
-		price = Stocks.objects.filter(name=name).values('price').first()['price']
-		request.session['bought_stocks'].update({name:{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
-		request.session['bought_stocks'][name]['profit'] = count_profit(request, name)
-		names.append(name)
+	stocks=[]
+	for value in request.session['bought_stocks']:
+		stocks.append([entry for entry in Stocks.objects.filter(name=value).values()][0])
+	
+	request.session['stocks'] = stocks
 
-	stocks = []
-	names.sort()
-	for value in names:
-		request.session['stocks'].append([entry for entry in Stocks.objects.filter(name=value).values()][0])
+	print(request.session['bought_stocks'])
 
 	data = {
 		'stocks': request.session['stocks'],
-		'money': Member.objects.get(id=1).money,
+		'money': request.session['money'],
 		'bought_stocks': request.session['bought_stocks']
 	}
 
@@ -172,25 +173,16 @@ def order_table(request):
 @login_required(login_url='login')
 def charts(request,*args,**kwargs):
 	data = {
-		'money': Member.objects.get(id=1).money
+		'money': Member.objects.get(member=request.user).money
 	}
 	return render(request,'charts.html', data)
 
 def upd_charts(request):
-	mem_id = 1
-	mem = Member.objects.get(id=mem_id)
-	stocks = Stocks.objects.values()
 
-	vall = Order.objects.filter(member_id=mem_id).filter(owned__gt=0).values_list('stock_name', flat=True).distinct()
-	for name in vall:
-		suma = Order.objects.filter(stock_name=name).aggregate(Sum('owned'))
-		price = Stocks.objects.filter(name=name).values('price').first()['price']
-		request.session['bought_stocks'].update({name:{'value': round(price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
-		request.session['bought_stocks'][name]['profit'] = count_profit(request, name)
+	request.session['bought_stocks'] = get_bought_stocks(request)
 
 	stocks=[]
 	for value in request.session['bought_stocks']:
-		print(value)
 		stocks.append([entry for entry in Stocks.objects.filter(name=value).values()][0])
 
 	labels = []
