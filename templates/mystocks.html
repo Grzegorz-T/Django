@@ -1,5 +1,5 @@
 {% extends "form.html" %}
-{% block content %}
+{% block mystocks %}
 {% if bought_stocks %}
 <table class="table table-striped table-hover sticky">
     <thead class="thead-dark">
@@ -32,11 +32,11 @@
         </tr>
     </thead>
     <tbody id="stocks">
-        {% load get_item %}
+        {% load filters %}
         {% for stock in stocks %}
         <tr>
-            <td>{{forloop.counter}}</td>
-            <td id="name{{forloop.counter}}">{{stock.name}}</td>
+            <td class="align-middle" >{{forloop.counter}}</td>
+            <td class="align-middle" id="name{{forloop.counter}}">{{stock.name}}</td>
             {% if stock.change > 0 %}
             <td class="align-middle" style="color: rgb(0, 200, 0);" id="price{{forloop.counter}}">{{stock.price}}</td>
             {% elif stock.change == 0 %}
@@ -61,15 +61,15 @@
             <td class="align-middle" style="color: rgb(225, 0, 0);"  id="perc{{forloop.counter}}">{{stock.perc}}%</td>
             {% endif %}
 
-            <td id="opening{{forloop.counter}}">{{stock.opening}}</td>
-            <td id="max{{forloop.counter}}">{{stock.max}}</td>
-            <td id="min{{forloop.counter}}">{{stock.min}}</td>
+            <td class="align-middle" id="opening{{forloop.counter}}">{{stock.opening}}</td>
+            <td class="align-middle" id="max{{forloop.counter}}">{{stock.max}}</td>
+            <td class="align-middle" id="min{{forloop.counter}}">{{stock.min}}</td>
             <td>
                 <form class="form-inline">
                     <div>
                         <input type="number" class="form-control" id="Stock_Input{{forloop.counter}}" min="0" max="100000" value="0">
-                        <button id="buy_button" type="button" class="btn btn-outline-success" row_id="{{forloop.counter}}" stock_name="{{stock.name}}">B</button>
-                        <button id="sell_button" type="button" class="btn btn-outline-danger" row_id="{{forloop.counter}}" stock_name="{{stock.name}}">S</button>
+                        <button id="buy_button{{forloop.counter}}" type="button" class="btn btn-outline-success" row_id="{{forloop.counter}}" stock_name="{{stock.name}}">B</button>
+                        <button id="sell_button{{forloop.counter}}" type="button" class="btn btn-outline-danger" row_id="{{forloop.counter}}" stock_name="{{stock.name}}">S</button>
                     </div>
                 </form>
             </td>
@@ -87,12 +87,6 @@
                     <td class="align-middle" style="color: rgb(225, 0, 0);"  id="profit{{forloop.counter}}">{{b_stock.profit}}%</td>
                 {% endif %}
                 {% endwith %}
-            {% else  %}
-                <td class="align-middle">
-                    <div id="quantity{{forloop.counter}}">Owned: 0</div>
-                    <div id="value{{forloop.counter}}">Value: 0$</div>
-                </td>
-                <td class="align-middle" id="profit{{forloop.counter}}">0%</td>
             {% endif %}
         </tr>
         {% endfor %}

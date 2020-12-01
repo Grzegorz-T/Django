@@ -18,8 +18,8 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from members.views import loginPage, logoutUser, registerPage
-from stocks.views import home, my_stocks, charts, update, upd_charts, order_table
+from members.views import loginPage, logoutUser, registerPage, loggin
+from stocks.views import home, my_stocks, charts, top_users, update, upd_charts, order_table
 from orders.views import process
 
 urlpatterns = [
@@ -30,11 +30,14 @@ urlpatterns = [
     path('', home, name='home'),
     path('mystocks/', my_stocks, name='my_stocks'),
     path('charts/', charts, name='charts'),
+    path('top_users/', top_users, name='top_users'),
 
     path('_process/', process),
     path('_update/', update),
     path('_upd_charts/', upd_charts),
+    #path('_login/', loggin),
     path('_order_table/', order_table),
+
 
     path('admin/', admin.site.urls),
     

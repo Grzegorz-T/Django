@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     {% load static %}
+    <script src="{% static '/js/login.js' %}"></script>
     <script src="{% static '/js/form.js' %}"></script>
     <script src="{% static '/js/order_table.js' %}"></script>
     <script type="text/javascript">
@@ -78,10 +79,66 @@
             position: sticky;
             top: 71px;
         }
+        .user_card {
+        width: 350px;
+        margin-top: auto;
+        margin-bottom: auto;
+        background: rgba(0, 0, 0, 0.7);
+        position: relative;
+        display: flex;
+        justify-content: center;
+        flex-direction: column;
+        padding: 10px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        -webkit-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        -moz-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        border-radius: 5px;
+
+    }
+
+    .form_container {
+        margin-top: 20px;
+    }
+
+    #form-title{
+        color: #fff;
         
+    }
+
+    .login_btn {
+        width: 100%;
+        background: #ff9900 !important;
+        color: white !important;
+    }
+    .login_btn:focus {
+        box-shadow: none !important;
+        outline: 0px !important;
+    }
+    .login_container {
+        padding: 0 2rem;
+    }
+    .input-group-text {
+        background: #ff9900 !important;
+        color: white !important;
+        border: 0 !important;
+        border-radius: 0.25rem 0 0 0.25rem !important;
+    }
+    .input_user,
+    .input_pass:focus {
+        box-shadow: none !important;
+        outline: 0px !important;
+    }
+
+    #messages{
+        background-color: grey;
+        color: #fff;
+        padding: 10px;
+        margin-top: 10px;
+    }
     </style>
 </head>
 <body>
+    <div class="main">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <a class="navbar-brand text-warning" href="/">OpenStock</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,10 +150,13 @@
                     <a class="btn btn-outline-warning my-2 my-sm-0" href="/">Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/charts">charts</a>
+                    <a class="nav-link" href="/charts">Charts</a>
                 </li>
                 <li class="nav-item shadow">
                     <a class="btn btn-outline-warning my-2 my-sm-0" href="/mystocks">My stocks</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/top_users">Top</a>
                 </li>
                 <li class="nav-item">
                     <b class="hello mx-md-2" style="font-size: large;">Hello, 
@@ -131,13 +191,22 @@
             </ul>
         </div>
     </nav>
-{% block content %}
+    
+{% block stocks %}
 {% endblock %}
-{% block content2 %}
+
+{% block mystocks %}
 {% endblock %}
+
 {% block charts %}
 {% endblock %}
+
+{% block top_users %}
+{% endblock %}
+
 {% block jquery %}
 {% endblock %}
+
+</div>
 </body>
 </html>

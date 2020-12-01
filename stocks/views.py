@@ -6,6 +6,7 @@ from datetime import datetime
 from .models import Stocks
 from members.decorators import allowed_users, run_once
 from orders.models import Order
+from django.contrib.auth.models import User
 from django.contrib.sessions.backends.db import SessionStore
 
 from django.contrib.auth.decorators import login_required
@@ -13,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from bs4 import BeautifulSoup
 from members.models import Member
 from django.views.generic import View
-from django.db.models import Sum
+from django.db.models import FloatField, Sum, F
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -98,10 +99,11 @@ def update(request):
 def get_bought_stocks(request):
 	bought_stocks = {}
 	orders = Order.objects.filter(member=request.user.member).filter(owned__gt=0).values('stock').distinct()
+	print(orders)
 	for order in orders:
 		stock = Stocks.objects.get(id=order['stock'])
 		suma = Order.objects.filter(member=request.user.member).filter(stock=stock).aggregate(Sum('owned'))
-		bought_stocks.update({stock.name:{'value': round(stock.price*int(suma['owned__sum']),3), 'quantity': int(suma['owned__sum']), 'profit': 0}})
+		bought_stocks.update({stock.name:{'value': round(stock.price*int(suma['owned__sum']),4), 'quantity': int(suma['owned__sum']), 'profit': 0}})
 		bought_stocks[stock.name]['profit'] = count_profit(request, stock, bought_stocks[stock.name]['value'])
 	return bought_stocks
 
@@ -155,6 +157,33 @@ def my_stocks(request):
 	}
 
 	return render(request, 'mystocks.html', data)
+
+@login_required(login_url='login')
+def top_users(request):
+	user_data = {}
+
+	members = Member.objects.filter(member__groups__name='customer').all()
+	for ids, member in enumerate(members):
+		money = Member.objects.get(name=member).money
+		sum = 0
+		orders = Order.objects.filter(member=member).filter(owned__gt=0).values('stock').distinct()
+		for order in orders:
+			stock = Stocks.objects.get(id=order['stock'])
+			quantity = Order.objects.filter(member=member).filter(stock=stock).aggregate(Sum('owned'))
+			sum += round(stock.price*int(quantity['owned__sum']),4)
+
+		capital = money + sum
+		member.capital = capital
+		profit = round(((capital - 20000)/20000)*100,3)
+		member.profit = profit
+		member.save()
+
+
+	data = {
+	'money': Member.objects.get(member=request.user).money,
+	'users': Member.objects.filter(member__groups__name='customer').all()
+	}
+	return render(request,'top_users.html', data)
 
 @csrf_exempt
 def order_table(request):

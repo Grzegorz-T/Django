@@ -1,0 +1,52 @@
+{% extends "form.html" %}
+{% block top_users %}
+<table class="table table-striped table-hover sticky">
+    <thead class="thead-dark">
+        <tr>
+            <th class="align-middle" scope="col">#</th>
+            <th class="align-middle" scope="col">User
+                <button type="submit" class="btn btn-outline-secondary rounded-circle" name="name">^</button>
+            </th>
+            <th class="align-middle" scope="col">Value
+                <button type="submit" class="btn btn-outline-secondary rounded-circle" name="price">^</button>
+            </th>
+            <th class="align-middle" scope="col">Profit
+                <button type="submit" class="btn btn-outline-secondary rounded-circle" name="change">^</button>
+            </th>
+        </tr>
+    </thead>
+    <tbody id="top_users">
+        {% for user in users %}
+        {% if forloop.counter == 1 %}
+        <tr style="background-color: rgb(255, 243, 175);">
+            <td class="align-middle" style="color: rgb(199, 169, 0);">{{forloop.counter}}</td>
+            <td class="align-middle" style="color: rgb(199, 169, 0);" id="user_name{{forloop.counter}}"><b>{{user}}</b></td>
+            <td class="align-middle" style="color: rgb(199, 169, 0);" id="value{{forloop.counter}}"><b>{{user.capital}}</b></td>
+            <td class="align-middle" style="color: rgb(199, 169, 0);" id="profit{{forloop.counter}}"><b>{{user.profit}}%</b></td>
+        </tr>
+        {% elif forloop.counter == 2 %}
+        <tr style="background-color: rgb(218, 218, 218);">
+            <td class="align-middle" style="color: rgb(129, 129, 129);">{{forloop.counter}}</td>
+            <td class="align-middle" style="color: rgb(129, 129, 129);" id="user_name{{forloop.counter}}"><b>{{user}}</b></td>
+            <td class="align-middle" style="color: rgb(129, 129, 129);" id="value{{forloop.counter}}"><b>{{user.capital}}</b></td>
+            <td class="align-middle" style="color: rgb(129, 129, 129);" id="profit{{forloop.counter}}"><b>{{user.profit}}%</b></td>
+        </tr>
+        {% elif forloop.counter == 3 %}
+        <tr style="background-color: rgb(221, 196, 181);">
+            <td class="align-middle" style="color: rgb(165, 86, 40);">{{forloop.counter}}</td>
+            <td class="align-middle" style="color: rgb(165, 86, 40);" id="user_name{{forloop.counter}}"><b>{{user}}</b></td>
+            <td class="align-middle" style="color: rgb(165, 86, 40);" id="value{{forloop.counter}}"><b>{{user.capital}}</b></td>
+            <td class="align-middle" style="color: rgb(165, 86, 40);" id="profit{{forloop.counter}}"><b>{{user.profit}}%</b></td>
+        </tr>
+        {% else %}
+        <tr>
+            <td class="align-middle" >{{forloop.counter}}</td>
+            <td class="align-middle" id="user_name{{forloop.counter}}">{{user}}</td>
+            <td class="align-middle" id="value{{forloop.counter}}">{{user.capital}}</td>
+            <td class="align-middle" id="profit{{forloop.counter}}">{{user.profit}}%</td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

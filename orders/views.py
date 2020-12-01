@@ -26,6 +26,7 @@ def process(request):
 			bought_stocks = request.session['bought_stocks']
 
 			if(request.user.is_authenticated):
+				member = Member.objects.get(member=request.user)
 				if(request.POST.get('buy')=='true'):
 					print('buy')
 					maximum = int(member.money/price)
@@ -99,10 +100,9 @@ def process(request):
 						return JsonResponse({'money': round(member.money,4), 'quantity' : 0, 'value' : 0, 'profit': 0})
 					
 			else:
-
+				money = request.session['money']
 				if(request.POST.get('buy')=='true'):
 					print('buy')
-					money = request.session['money']
 					maximum = int(money/price)
 
 					if(maximum!=0):
