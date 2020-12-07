@@ -16,6 +16,8 @@ from members.models import Member
 from django.views.generic import View
 from django.db.models import FloatField, Sum, F
 from django.views.decorators.csrf import csrf_exempt
+from huey.contrib.djhuey import db_periodic_task
+from huey import crontab
 
 
 def count_profit(request, stock, current_value):
@@ -44,7 +46,7 @@ def stock_price(name):
 		price = Stocks.objects.filter(name=name).get(price)
 		return price
 
-
+@db_periodic_task(crontab(minute='*/1'))
 def update_stocks():
 	if(requests.get('https://www.bankier.pl/gielda/notowania/akcje')):
 		url = requests.get('https://www.bankier.pl/gielda/notowania/akcje')
@@ -52,8 +54,9 @@ def update_stocks():
 		#file = open('C:/Users/grzes/OneDrive/Pulpit/akcje.html')
 		#soup = BeautifulSoup(file , 'html.parser')
 		a = len(soup.find_all("tr", class_=False))
-		while(a-1<Stocks.objects.count()):
-			Stocks.objects.filter(id=Stocks.objects.count()).delete()
+		number = Stocks.objects.count()
+		while(a-1<number):
+			Stocks.objects.filter(id=number).delete()
 		tab = [[i] for i in range(a)]
 		for i,record in enumerate(soup.find_all("tr", class_=False)):
 			for data in record.findAll("td"):
@@ -66,7 +69,7 @@ def update_stocks():
 					tab[i][9] = tab[i][9].replace(u'\xa0', u'')
 
 				Stocks.objects.update_or_create(id=i, defaults={
-					'name':tab[i][1],
+					'name': tab[i][1],
 					'price': float(tab[i][2].replace(',','.')),
 					'change': float(tab[i][3].replace(',','.')),
 					'perc': float(tab[i][4].replace(',','.').replace('%','')),
@@ -78,16 +81,15 @@ def update_stocks():
 @csrf_exempt
 def update(request):
 	if request.method == 'POST':
-		update_stocks()
 		if(request.path=='/'):
 			if(request.session['top'] == False):
-				request.session['stocks'] = [entry for entry in Stocks.objects.order_by(request.session['order_by']).values()]
+				request.session['stocks'] = list(Stocks.objects.order_by(request.session['order_by']).values())
 			else:
-				request.session['stocks'] = [entry for entry in Stocks.objects.order_by('-'+request.session['order_by']).values()]
+				request.session['stocks'] = list(Stocks.objects.order_by('-'+request.session['order_by']).values())
 		elif(request.path=='/mystocks'):
 			request.session['stocks'] = []
 			for stock in request.session['bought_stocks']:
-				request.session['stocks'].append([entry for entry in Stocks.objects.filter(name=stock).values()][0])
+				request.session['stocks'] += (list(Stocks.objects.filter(name=stock).values()))
 				
 			if(request.session['top'] == False):
 				request.session['stocks'] = sorted(request.session['stocks'], key=lambda k: k[request.session['order_by']])
@@ -99,7 +101,6 @@ def update(request):
 def get_bought_stocks(request):
 	bought_stocks = {}
 	orders = Order.objects.filter(member=request.user.member).filter(owned__gt=0).values('stock').distinct()
-	print(orders)
 	for order in orders:
 		stock = Stocks.objects.get(id=order['stock'])
 		suma = Order.objects.filter(member=request.user.member).filter(stock=stock).aggregate(Sum('owned'))
@@ -108,6 +109,7 @@ def get_bought_stocks(request):
 	return bought_stocks
 
 def home(request):
+	update_stocks()
 	request.session['order_by'] = 'name'
 	request.session['top'] = False
 	request.session['stocks'] = [entry for entry in Stocks.objects.values()]
@@ -133,6 +135,7 @@ def home(request):
 def my_stocks(request):
 	request.session['order_by'] = 'name'
 	request.session['top'] = False
+
 	if(request.user.is_authenticated):
 		request.session['money'] = Member.objects.get(member=request.user).money
 		request.session['bought_stocks'] = get_bought_stocks(request)
@@ -142,13 +145,13 @@ def my_stocks(request):
 			request.session['money'] = 20000
 			request.session['bought_stocks'] = {}
 
+
 	stocks=[]
 	for value in request.session['bought_stocks']:
-		stocks.append([entry for entry in Stocks.objects.filter(name=value).values()][0])
-	
+		stocks += list(Stocks.objects.filter(name=value).values())
+
 	request.session['stocks'] = stocks
 
-	print(request.session['bought_stocks'])
 
 	data = {
 		'stocks': request.session['stocks'],
@@ -172,16 +175,15 @@ def top_users(request):
 			quantity = Order.objects.filter(member=member).filter(stock=stock).aggregate(Sum('owned'))
 			sum += round(stock.price*int(quantity['owned__sum']),4)
 
-		capital = money + sum
-		member.capital = capital
+		capital = round(money + sum,4)
 		profit = round(((capital - 20000)/20000)*100,3)
+		member.capital = capital
 		member.profit = profit
 		member.save()
 
-
 	data = {
 	'money': Member.objects.get(member=request.user).money,
-	'users': Member.objects.filter(member__groups__name='customer').all()
+	'users': members.order_by('-capital')
 	}
 	return render(request,'top_users.html', data)
 
@@ -208,18 +210,14 @@ def charts(request,*args,**kwargs):
 
 def upd_charts(request):
 
-	request.session['bought_stocks'] = get_bought_stocks(request)
-
-	stocks=[]
-	for value in request.session['bought_stocks']:
-		stocks.append([entry for entry in Stocks.objects.filter(name=value).values()][0])
-
 	labels = []
 	values = []
 	profits = []
-	for stock in stocks:
-		labels.append(stock['name'])
-		values.append(request.session['bought_stocks'][stock['name']]['value'])
-		profits.append(request.session['bought_stocks'][stock['name']]['profit'])
-
-	return JsonResponse({'labels': labels, 'values': values, 'profits': profits})
+	stocks = {}
+	for stock in request.session['bought_stocks']:
+		labels.append(stock)
+		values.append(request.session['bought_stocks'][stock]['value'])
+		profits.append(request.session['bought_stocks'][stock]['profit'])
+	print(request.session['bought_stocks'])
+	
+	return JsonResponse({'labels': labels, 'values': values, 'stocks': request.session['bought_stocks']})

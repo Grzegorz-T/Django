@@ -29,8 +29,8 @@ $(document).ready(function() {
                     $('#perc'+(i+1)).text(stock.perc+'%').css("color","rgb(225, 0, 0)");
                 }
                 $('#opening'+(i+1)).text(stock.opening);
-                $('#stock_max'+(i+1)).text(stock.stock_max);
-                $('#stock_min'+(i+1)).text(stock.stock_min);
+                $('#max'+(i+1)).text(stock.stock_max);
+                $('#min'+(i+1)).text(stock.stock_min);
                 $('#buy_button'+(i+1)).attr('stock_name', stock.name);
                 $('#sell_button'+(i+1)).attr('stock_name', stock.name);
                 if(data.bought_stocks[stock.name]){

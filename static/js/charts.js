@@ -2,13 +2,15 @@ $(document).ready(function() {
     var labels = []
     var values = []
     var profits = []
+    var stocks = []
     $.ajax({
         type : 'GET',
         url : '/_upd_charts/',
         success: function(data){
             labels = data.labels
             values = data.values
-            profits = data.profits
+            profits = data.profits 
+            stocks = data.stocks
             setChart()
         }
     })
@@ -17,26 +19,26 @@ $(document).ready(function() {
         for(let i=0;i<labels.length;i++){
             //1,5,3,6,2,4
             if(i%6==0){
-                this.colors.push('rgba('+ (255-darker) + ',' + (100-darker) + ',' + Math.floor(Math.random()*(135-darker)+100).toString()+',0.35)');
+                this.colors.push('rgba('+ (255-darker) + ',' + (100-darker) + ',' + Math.floor(Math.random()*(155-darker)+100).toString()+',0.35)');
             }
             else{
                 if(i%6==1){
-                    this.colors.push('rgba('+Math.floor(Math.random()*(135-darker)+120).toString() + ',' +  (255-darker) + ',' + (100-darker) + ',0.35)');
+                    this.colors.push('rgba('+Math.floor(Math.random()*(155-darker)+120).toString() + ',' +  (255-darker) + ',' + (100-darker) + ',0.35)');
                 }
                 else{
                     if(i%6==2){
-                        this.colors.push('rgba(' + (100-darker) + ',' +Math.floor(Math.random()*(135-darker)+120).toString() + ',' +  (255-darker) + ',0.35)');
+                        this.colors.push('rgba(' + (100-darker) + ',' +Math.floor(Math.random()*(155-darker)+120).toString() + ',' +  (255-darker) + ',0.35)');
                     }
                     else{
                         if(i%6==3){
-                            this.colors.push('rgba('+ (255-darker) + ',' +Math.floor(Math.random()*(135-darker)+100).toString() + ',' + (100-darker) + ',0.35)');
+                            this.colors.push('rgba('+ (255-darker) + ',' +Math.floor(Math.random()*(155-darker)+100).toString() + ',' + (100-darker) + ',0.35)');
                         }
                         else{
                             if(i%6==4){
-                                this.colors.push('rgba(' +Math.floor(Math.random()*(135-darker)+120).toString() + ',' +  (100-darker) + ',' + (255-darker) + ',0.35)');
+                                this.colors.push('rgba(' +Math.floor(Math.random()*(155-darker)+120).toString() + ',' +  (100-darker) + ',' + (255-darker) + ',0.35)');
                             }
                             else{
-                                this.colors.push('rgba(' + (100-darker) + ',' + (255-darker) + ',' + Math.floor(Math.random()*(135-darker)+100).toString() + ',0.35)');
+                                this.colors.push('rgba(' + (100-darker) + ',' + (255-darker) + ',' + Math.floor(Math.random()*(155-darker)+100).toString() + ',0.35)');
                                 }
                             }
                         }
@@ -46,22 +48,51 @@ $(document).ready(function() {
         return colors;
     }
 
-    function order_labels(values) {
-        sorted_values = values.sort();
-        ordered_labels = [];
-        for(let i=0;i<values.length;i++){
-            for(let j=0;j<values.length;j++){
-                if(values[i]==sorted_values[j]){
-                    ordered_labels[i]=labels[j];
-                }
-            }
+    function order_labels_profits(stocks) {
+
+        var items = Object.keys(stocks).map(function(key) {
+            return [key, stocks[key]];
+          });
+
+        items.sort(function(a, b) {
+
+            return a[1]['profit'] - b[1]['profit'];
+        });
+
+        names = []
+        for(var key in items) {
+            names.push(items[key][0])
         }
-    return ordered_labels;
+        console.log(names)
+
+    return names;
+    }
+
+    function order_profits(stocks) {
+
+        var items = Object.keys(stocks).map(function(key) {
+            return [key, stocks[key]];
+          });
+
+        items.sort(function(a, b) {
+
+            return a[1]['profit'] - b[1]['profit'];
+        });
+
+        values = []
+        for(var key in items) {
+            values.push(items[key][1]['profit'])
+        }
+        console.log(values)
+
+    return values;
     }
 
     function setChart(){
     var ctx = document.getElementById('myChart');
     var ctx2 = document.getElementById('myChart2');
+    var backgroundColors = getRandomColor(0)
+    var borderColor = getRandomColor(100)
     var myChart = new Chart(ctx, {
         type: 'pie',
         data: {
@@ -70,8 +101,8 @@ $(document).ready(function() {
                 label: '# of Votes',
                 data: values,
                 rotation: 90,
-                backgroundColor: getRandomColor(0),
-                borderColor: getRandomColor(100),
+                backgroundColor: backgroundColors,
+                borderColor: borderColor,
                 borderWidth: 2,
             }]
         },
@@ -87,12 +118,12 @@ $(document).ready(function() {
     var myChart = new Chart(ctx2, {
         type: 'bar',
         data: {
-            labels: order_labels(profits),
+            labels: order_labels_profits(stocks),
             datasets: [{
                 label: '# of Votes',
-                data: profits,
-                backgroundColor: getRandomColor(0),
-                borderColor: getRandomColor(100),
+                data: order_profits(stocks),
+                backgroundColor: backgroundColors,
+                borderColor: borderColor,
                 borderWidth: 3
             }]
         },
@@ -106,7 +137,9 @@ $(document).ready(function() {
             },
             title:{
                 display: true,
+                text: 'Gains/Losses of each bought stock in %',
                 padding: 20,
+                fontSize: 20,
             },
             legend: {
                 display: false,
